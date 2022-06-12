@@ -1,12 +1,13 @@
 <script lang="ts">
   export let count: number = 0
+  export let title: string = "Counter"
   const increment = () => {
     count += 1
   }
 </script>
 
 <button on:click={increment}>
-  Clicks: {count}
+  {title}: {count}
 </button>
 
 <style>

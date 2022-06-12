@@ -1,23 +1,16 @@
 <script lang="ts">
-  import logo from './assets/svelte.png'
   import Counter from './lib/Counter.svelte'
 </script>
 
 <main>
-  <img src={logo} alt="Svelte Logo" />
-  <h1>Hello Typescript!</h1>
+  <h1>Hello there!</h1>
 
-  <Counter count={5}/>
+  <Counter title={"Counter 1"} count={5}/>
 
-  <Counter />
+  <Counter title={"Counter 2"}/>
+  
   <p>
-    Visit <a href="https://svelte.dev">svelte.dev</a> to learn how to build Svelte
-    apps.
-  </p>
-
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme">SvelteKit</a> for
-    the officially supported framework, also powered by Vite!
+  This is to test publishing...
   </p>
 </main>
 
