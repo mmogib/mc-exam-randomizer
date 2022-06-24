@@ -2,7 +2,7 @@
 
 use std::f32::consts::E;
 
-use examshuffler::{
+use mc_exam_randomizer::{
     errors::ExamReaderError,
     from_csv, from_tex,
     shuffler::{shuffle_choices, shuffle_exam, Choice, Choices, CorrectChoice, Exam, Question},
