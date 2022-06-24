@@ -7,7 +7,7 @@ license = "MIT"
 homepage = "https://github.com/mmogib/mc-exam-randomizer"
 repository = "https://github.com/mmogib/mc-exam-randomizer"
 documentation = "https://github.com/mmogib/mc-exam-randomizer"
-keywords = ["random", "mc exams"]
+keywords = ["random", "mc-exams"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
