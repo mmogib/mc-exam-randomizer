@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, PartialEq)]
+use serde::{ser::SerializeTupleStruct, Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Question {
     pub text: String,
     pub order: u32,
@@ -22,14 +24,14 @@ impl Question {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Choices(
     pub Vec<Choice>,
     pub CorrectChoice,
     pub Option<ChoiceOrdering>,
 );
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Choice {
     pub text: String,
 }
@@ -40,10 +42,10 @@ impl Choice {
         }
     }
 }
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CorrectChoice(pub u32);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ChoiceOrdering(pub Vec<u32>);
 #[cfg(test)]
 mod tests {

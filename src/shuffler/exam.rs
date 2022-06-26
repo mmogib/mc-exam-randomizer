@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{errors::ExamReaderError, examreader, shuffler::Question};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Exam {
     pub name: String,
     pub questions: Option<Vec<Question>>,
