@@ -47,8 +47,16 @@ pub fn shuffle_choices(qs: &Question) -> Question {
         let nocs = vcs.len() as u32;
         let mut ordering: Vec<u32> = (0..nocs).collect();
         ordering.shuffle(&mut thread_rng());
+        let new_order = (&ordering)
+            .iter()
+            .position(|o| o == crrct)
+            .unwrap_or(*crrct as usize);
         let choice_ordering = ChoiceOrdering(ordering.to_vec());
-        let new_choices = Choices(vcs.to_vec(), CorrectChoice(*crrct), Some(choice_ordering));
+        let new_choices = Choices(
+            vcs.to_vec(),
+            CorrectChoice(new_order as u32),
+            Some(choice_ordering),
+        );
         Question {
             text: (qs.text).to_string(),
             order: qs.order,

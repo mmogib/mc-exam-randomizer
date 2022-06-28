@@ -81,7 +81,7 @@ fn get_question_options_from_tex(q: &String) -> Option<Choices> {
     if parts.len() == 0 {
         return None;
     }
-    Some(Choices(parts, CorrectChoice(1), None))
+    Some(Choices(parts, CorrectChoice(0), None))
 }
 
 pub fn from_csv(filename: &str) -> Result<Vec<Question>, ExamReaderError> {
@@ -157,5 +157,5 @@ pub struct CorrectChoice(pub u32);
 */
 fn get_question_options_from_csv(options: Vec<String>) -> Option<Choices> {
     let choices: Vec<Choice> = options.into_iter().map(|o| Choice { text: o }).collect();
-    Some(Choices(choices, CorrectChoice(1), None))
+    Some(Choices(choices, CorrectChoice(0), None))
 }
