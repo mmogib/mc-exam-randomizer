@@ -1,3 +1,5 @@
+pub const TEX_PREAMBLE_START: &str = "%{#preamble}";
+pub const TEX_PREAMBLE_END: &str = "%{/preamble}";
 pub const TEX_DOC_START: &str = "\\begin{document}";
 pub const TEX_DOC_END: &str = "\\end{document}";
 pub const TEX_QUESTION_START: &str = "%{#q}";

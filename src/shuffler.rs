@@ -1,11 +1,10 @@
 pub mod exam;
 pub mod question;
 
-use rand::seq::SliceRandom;
-use rand::thread_rng;
-
 pub use exam::*;
 pub use question::*;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 pub fn shuffle_questions(qs: &Vec<Question>) -> Vec<&Question> {
     let noq = qs.len() as u32;
@@ -21,7 +20,11 @@ pub fn shuffle_questions(qs: &Vec<Question>) -> Vec<&Question> {
 
 pub fn shuffle_exam(ex: &Exam, name: Option<&str>) -> Exam {
     let name = if let Some(nm) = name { nm } else { &ex.name };
-
+    // let preamble = if let Some(pre) = &ex.preamble {
+    //     Some(pre.to_owned())
+    // } else {
+    //     None
+    // };
     if let Some(qs) = &ex.questions {
         let qs_shuffled: Vec<Question> = qs.into_iter().map(|q| shuffle_choices(q)).collect();
         let noq = qs.len() as u32;
@@ -29,12 +32,14 @@ pub fn shuffle_exam(ex: &Exam, name: Option<&str>) -> Exam {
         ordering.shuffle(&mut thread_rng());
         Exam {
             name: name.to_string(),
+            preamble: ex.preamble.to_owned(),
             questions: Some(qs_shuffled),
             ordering: Some(ordering),
         }
     } else {
         Exam {
             name: name.to_string(),
+            preamble: None,
             questions: None,
             ordering: None,
         }
@@ -61,6 +66,7 @@ pub fn shuffle_choices(qs: &Question) -> Question {
             text: (qs.text).to_string(),
             order: qs.order,
             choices: Some(new_choices),
+            group: 1,
         }
     } else {
         qs.to_owned()

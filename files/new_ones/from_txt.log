@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.1) (preloaded format=pdflatex 2022.4.30)  28 JUN 2022 06:06
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.1) (preloaded format=pdflatex 2022.4.30)  29 JUN 2022 12:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**./final_exam.tex
-(final_exam.tex
+**./from_txt.tex
+(from_txt.tex
 LaTeX2e <2021-11-15> patch level 1
 L3 programming layer <2022-02-24>
 (C:\Users\mmogi\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
@@ -83,8 +83,8 @@ File: l3backend-pdftex.def 2022-02-07 L3 backend support: PDF output (pdfTeX)
 LaTeX Warning: Unused global option(s):
     [amsfonts,bezier].
 
-(final_exam.aux)
-\openout1 = `final_exam.aux'.
+(from_txt.aux)
+\openout1 = `from_txt.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 17.
 LaTeX Font Info:    ... okay on input line 17.
@@ -163,44 +163,43 @@ File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 )) [1
 
 {C:/Users/mmogi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
-[2] [1] [2] [3] [4] [5]
+[2] [1]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <14.4> on input line 263.
+(Font)              <14.4> on input line 139.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 263.
- [6] [1] [2] [3] [4] [5] [6] [1] [2] [3] [4] [5]
-[6] [1] [2] [3] [4] [5] [6] [1] [2] [3] [4] [5]
+(Font)              <7> on input line 139.
+ [2] [1] [2] [1] [2] [1] [2] [1]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 1108.
+(Font)              <12> on input line 488.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 1108.
+(Font)              <8> on input line 488.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 1108.
- [1] [2] (final_exam.aux) )
+(Font)              <6> on input line 488.
+ [1] [2] (from_txt.aux) )
 (\end occurred inside a group at level 4)
 
-### simple group (level 4) entered at line 904 ({)
-### simple group (level 3) entered at line 689 ({)
-### simple group (level 2) entered at line 474 ({)
-### simple group (level 1) entered at line 259 ({)
+### simple group (level 4) entered at line 408 ({)
+### simple group (level 3) entered at line 317 ({)
+### simple group (level 2) entered at line 226 ({)
+### simple group (level 1) entered at line 135 ({)
 ### bottom level 
 Here is how much of TeX's memory you used:
  2005 strings out of 478655
- 36040 string characters out of 2846785
- 330342 words of memory out of 3000000
+ 36016 string characters out of 2846785
+ 325333 words of memory out of 3000000
  20117 multiletter control sequences out of 15000+600000
  474780 words of font info for 46 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,10n,67p,218b,434s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,10n,67p,216b,434s stack positions out of 5000i,500n,10000p,200000b,80000s
 <C:/Users/mmogi/AppData/Local/Programs/MiKTeX/fonts/type1/publi
 c/amsfonts/cm/cmbx12.pfb><C:/Users/mmogi/AppData/Local/Programs/MiKTeX/fonts/ty
 pe1/public/amsfonts/cm/cmr10.pfb><C:/Users/mmogi/AppData/Local/Programs/MiKTeX/
 fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/mmogi/AppData/Local/Programs
 /MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/mmogi/AppData/Local/
 Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.pfb>
-Output written on final_exam.pdf (33 pages, 108263 bytes).
+Output written on from_txt.pdf (13 pages, 90524 bytes).
 PDF statistics:
- 133 PDF objects out of 1000 (max. 8388607)
+ 70 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

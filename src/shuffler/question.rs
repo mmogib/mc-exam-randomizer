@@ -5,6 +5,7 @@ pub struct Question {
     pub text: String,
     pub order: u32,
     pub choices: Option<Choices>,
+    pub group: u32,
 }
 
 impl Question {
@@ -13,6 +14,7 @@ impl Question {
             text: String::from(text),
             order,
             choices,
+            group: 1,
         }
     }
     pub fn from(text: &str, order: u32) -> Self {
@@ -20,6 +22,7 @@ impl Question {
             text: String::from(text),
             order,
             choices: None,
+            group: 1,
         }
     }
 }
@@ -104,6 +107,7 @@ mod tests {
             text: String::from("question from"),
             choices: None,
             order: 2,
+            group: 1,
         };
         assert_eq!(q, q2);
     }

@@ -7,18 +7,30 @@ use crate::{
     shuffler::{Choice, Choices, CorrectChoice, Question},
 };
 
-pub fn from_tex(filename: &str) -> Result<Vec<Question>, ExamReaderError> {
+pub fn from_tex(filename: &str) -> Result<(Option<String>, Vec<Question>), ExamReaderError> {
     let filecontent = fs::read_to_string(filename);
     match filecontent {
         Ok(contnet) => {
             if let Some(rcontent) = get_questions_from_tex(&contnet) {
-                Ok(rcontent)
+                Ok((get_preamble_from_text(&contnet), rcontent))
             } else {
                 Err(ExamReaderError::Unknown)
             }
         }
         Err(err) => Err(ExamReaderError::TemplateError(err.to_string())),
     }
+}
+
+fn get_preamble_from_text(content: &String) -> Option<String> {
+    if let Some(s) = content.find(TEX_PREAMBLE_START) {
+        if let Some(e) = content.find(TEX_PREAMBLE_END) {
+            let preamble = content[(s + 12)..e].trim().to_string();
+            return Some(preamble);
+        } else {
+            return None;
+        }
+    }
+    None
 }
 
 fn get_questions_from_tex(content: &String) -> Option<Vec<Question>> {
@@ -43,6 +55,7 @@ fn get_questions_from_tex(content: &String) -> Option<Vec<Question>> {
                 text: body,
                 choices: opts,
                 order: order,
+                group: 1,
             };
             order += 1;
             question
@@ -88,15 +101,29 @@ pub fn from_csv(filename: &str) -> Result<Vec<Question>, ExamReaderError> {
     let filecontent = fs::read_to_string(filename);
     if let Ok(content) = filecontent {
         let rdr = csv::ReaderBuilder::new()
+            .has_headers(false)
+            .from_reader(content.as_bytes());
+        if let Some(qs) = get_questions_from_csv(rdr) {
+            Ok(qs)
+        } else {
+            Err(ExamReaderError::TemplateError("Error".to_string()))
+        }
+    } else {
+        Err(ExamReaderError::TemplateError("some thing".to_string()))
+    }
+}
+
+pub fn from_txt(filename: &str) -> Result<Vec<Question>, ExamReaderError> {
+    let filecontent = fs::read_to_string(filename);
+    if let Ok(content) = filecontent {
+        let rdr = csv::ReaderBuilder::new()
             .delimiter(b'\t')
             .has_headers(false)
             .from_reader(content.as_bytes());
         if let Some(qs) = get_questions_from_csv(rdr) {
             Ok(qs)
         } else {
-            Err(ExamReaderError::TemplateError(
-                "This is cool error".to_string(),
-            ))
+            Err(ExamReaderError::TemplateError("Error".to_string()))
         }
     } else {
         Err(ExamReaderError::TemplateError("some thing".to_string()))
@@ -111,13 +138,20 @@ fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Option<Vec<Question>> 
         .map(|res| {
             if let Ok(rec) = res {
                 let record: Vec<String> = rec.iter().map(|f| f.to_string()).collect();
-                let choices = get_question_options_from_csv(record[1..].to_vec());
-                if let Some(text) = record.first() {
+                let choices = get_question_options_from_csv(record[2..].to_vec());
+                if let Some(text) = record.get(1) {
                     order = order + 1;
+                    let group = record
+                        .get(0)
+                        .unwrap_or(&"1".to_string())
+                        .parse()
+                        .unwrap_or(1);
+
                     Question {
                         text: text.to_owned(),
                         order,
                         choices,
+                        group,
                     }
                 } else {
                     Question::from("", 0)
@@ -130,31 +164,7 @@ fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Option<Vec<Question>> 
         .collect();
     Some(qs)
 }
-/*
 
-pub struct Choices(
-    pub Vec<Choice>,
-    pub CorrectChoice,
-    pub Option<ChoiceOrdering>,
-);
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Choice {
-    pub text: String,
-}
-impl Choice {
-    pub fn new(text: &str) -> Choice {
-        Choice {
-            text: String::from(text),
-        }
-    }
-}
-#[derive(Debug, Clone, PartialEq)]
-pub struct CorrectChoice(pub u32);
-
-
-
-*/
 fn get_question_options_from_csv(options: Vec<String>) -> Option<Choices> {
     let choices: Vec<Choice> = options.into_iter().map(|o| Choice { text: o }).collect();
     Some(Choices(choices, CorrectChoice(0), None))
