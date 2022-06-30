@@ -146,7 +146,7 @@ fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Option<Vec<Question>> 
                     } else {
                         1
                     };
-                    println!("{:#?}", record.get(0));
+
                     Question {
                         text: text.to_owned(),
                         order,
