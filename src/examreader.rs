@@ -141,12 +141,12 @@ fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Option<Vec<Question>> 
                 let choices = get_question_options_from_csv(record[2..].to_vec());
                 if let Some(text) = record.get(1) {
                     order = order + 1;
-                    let group = record
-                        .get(0)
-                        .unwrap_or(&"1".to_string())
-                        .parse()
-                        .unwrap_or(1);
-
+                    let group: u32 = if let Some(group_str) = record.get(0) {
+                        group_str.parse().unwrap_or(1)
+                    } else {
+                        1
+                    };
+                    println!("{:#?}", record.get(0));
                     Question {
                         text: text.to_owned(),
                         order,

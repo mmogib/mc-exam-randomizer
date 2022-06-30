@@ -1,7 +1,7 @@
 [package]
 name = "mc-exam-randomizer"
 description = "This is a library that help produce a randomized multiple choice (mc) exam."
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/mmogib/mc-exam-randomizer"
