@@ -26,7 +26,6 @@
 //     //         _ => println!("Err: {:#?}", err),
 //     //     },
 //     // };
-
 //     // let filename_csv = "files/sample.csv";
 //     // match Exam::from_csv(filename_csv, "master") {
 //     //     Ok(ex) => {
