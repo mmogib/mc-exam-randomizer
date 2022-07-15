@@ -10,14 +10,11 @@ use crate::{
 pub fn from_tex(filename: &str) -> Result<(Option<String>, Vec<Question>), ExamReaderError> {
     let filecontent = fs::read_to_string(filename);
     match filecontent {
-        Ok(contnet) => {
-            if let Some(rcontent) = get_questions_from_tex(&contnet) {
-                Ok((get_preamble_from_text(&contnet), rcontent))
-            } else {
-                Err(ExamReaderError::Unknown)
-            }
-        }
-        Err(err) => Err(ExamReaderError::TemplateError(err.to_string())),
+        Ok(contnet) => match get_questions_from_tex(&contnet) {
+            Ok(cntnt) => Ok((get_preamble_from_text(&contnet), cntnt)),
+            Err(err) => Err(ExamReaderError::TemplateError(err)),
+        },
+        Err(err) => Err(ExamReaderError::IOError(err)),
     }
 }
 
@@ -33,12 +30,20 @@ fn get_preamble_from_text(content: &String) -> Option<String> {
     None
 }
 
-fn get_questions_from_tex(content: &String) -> Option<Vec<Question>> {
-    let body_start = content.find(TEX_DOC_START).unwrap() + 16;
-    let body_end = content.find(TEX_DOC_END).unwrap();
+fn get_questions_from_tex(content: &String) -> Result<Vec<Question>, String> {
+    let body_start = if let Some(bdy_start) = content.find(TEX_DOC_START) {
+        bdy_start + 16
+    } else {
+        return Err("The document must have \\begin{document} tag".to_owned());
+    };
+    let body_end = if let Some(bdy_end) = content.find(TEX_DOC_END) {
+        bdy_end
+    } else {
+        return Err("The document must have \\end{document} tag".to_owned());
+    };
     let body = content[body_start..body_end].to_string();
     let parts: Vec<String> = body
-        .split("%{#q}")
+        .split(TEX_QUESTION_START)
         .map(|p| String::from(p.trim()))
         .collect();
     let mut order: u32 = 1;
@@ -54,7 +59,7 @@ fn get_questions_from_tex(content: &String) -> Option<Vec<Question>> {
             let question = Question {
                 text: body,
                 choices: opts,
-                order: order,
+                order,
                 group: 1,
             };
             order += 1;
@@ -63,9 +68,9 @@ fn get_questions_from_tex(content: &String) -> Option<Vec<Question>> {
         .collect();
 
     if qs.len() == 0 {
-        return None;
+        return Err("No questions were found.".to_string());
     }
-    Some(qs)
+    Ok(qs)
 }
 
 fn get_question_text_from_tex(q: &String) -> String {
@@ -168,4 +173,138 @@ fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Option<Vec<Question>> 
 fn get_question_options_from_csv(options: Vec<String>) -> Option<Choices> {
     let choices: Vec<Choice> = options.into_iter().map(|o| Choice { text: o }).collect();
     Some(Choices(choices, CorrectChoice(0), None))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn read_from_tex_bad_file() {
+        //bad file
+        let filename = "../files/testing/templatte.tex";
+        let tex = match from_tex(filename) {
+            Ok(_) => "nothing".to_owned(),
+            Err(err) => err.to_string(),
+        };
+        println!("{:#?}", tex);
+        assert_eq!(
+            tex,
+            "Reading error".to_string(),
+            "testing the file does not exist"
+        )
+    }
+    #[test]
+    fn read_from_tex_no_begin_doc() {
+        // no begin doc, no end doc
+        let filename = "files/testing/template-no-begin-doc.tex";
+        let tex = match from_tex(filename) {
+            Ok(_) => "nothing".to_owned(),
+            Err(err) => err.to_string(),
+        };
+        println!("{:#?}", tex);
+        assert_eq!(
+            tex,
+            "Your input file is badly formatted: `The document must have \\begin{document} tag`"
+                .to_string(),
+            "testing begin document tag"
+        );
+    }
+    #[test]
+    fn read_from_tex_no_end_doc() {
+        let filename = "files/testing/template-no-end-doc.tex";
+        let tex = match from_tex(filename) {
+            Ok(_) => "nothing".to_owned(),
+            Err(err) => err.to_string(),
+        };
+        println!("{:#?}", tex);
+        assert_eq!(
+            tex,
+            "Your input file is badly formatted: `The document must have \\end{document} tag`"
+                .to_string(),
+            "testing end document tag"
+        );
+    }
+
+    #[test]
+    fn read_from_tex_no_questions() {
+        let filename = "files/testing/template-no-questions.tex";
+        let tex = match from_tex(filename) {
+            Ok(_) => "nothing".to_owned(),
+            Err(err) => err.to_string(),
+        };
+        println!("{:#?}", tex);
+        assert_eq!(
+            tex,
+            "Your input file is badly formatted: `No questions were found.`".to_string(),
+            "testing no questions"
+        );
+    }
+    fn read_from_tex() -> Result<(String, usize, Vec<Question>), String> {
+        let filename = "files/testing/template.tex";
+        match from_tex(filename) {
+            Ok((preamble, qs)) => match preamble {
+                Some(pre) => Ok((pre, qs.len(), qs)),
+                None => Err("".to_string()),
+            },
+            Err(_err) => Err("".to_string()),
+        }
+    }
+
+    #[test]
+    fn read_from_tex_preamble() {
+        match read_from_tex() {
+            Ok(tex) => {
+                assert_eq!(
+                    tex.0,
+                    "\\usepackage{amsfonts}".to_string(),
+                    "testing preambles"
+                );
+            }
+            Err(_err) => (),
+        }
+    }
+
+    #[test]
+    fn read_from_tex_number_of_qs() {
+        match read_from_tex() {
+            Ok(tex) => {
+                assert_eq!(tex.1, 20);
+            }
+            Err(_err) => (),
+        }
+    }
+
+    #[test]
+    fn read_from_tex_number_of_options_is_zero() {
+        match read_from_tex() {
+            Ok(tex) => {
+                let no_options_1: i32 = match tex.2.get(0) {
+                    Some(op) => match &op.choices {
+                        Some(opts) => opts.0.len() as i32,
+                        None => 0,
+                    },
+                    None => -2,
+                };
+                assert_eq!(no_options_1, 0);
+            }
+            Err(_err) => (),
+        }
+    }
+
+    #[test]
+    fn read_from_tex_number_of_options_is_five() {
+        match read_from_tex() {
+            Ok(tex) => {
+                let no_options_1: i32 = match tex.2.get(1) {
+                    Some(op) => match &op.choices {
+                        Some(opts) => opts.0.len() as i32,
+                        None => 0,
+                    },
+                    None => -2,
+                };
+                assert_eq!(no_options_1, 5)
+            }
+            Err(_err) => (),
+        }
+    }
 }
