@@ -104,44 +104,47 @@ fn get_question_options_from_tex(q: &String) -> Option<Choices> {
 
 pub fn from_csv(filename: &str) -> Result<Vec<Question>, ExamReaderError> {
     let filecontent = fs::read_to_string(filename);
-    if let Ok(content) = filecontent {
-        let rdr = csv::ReaderBuilder::new()
-            .has_headers(false)
-            .from_reader(content.as_bytes());
-        if let Some(qs) = get_questions_from_csv(rdr) {
-            Ok(qs)
-        } else {
-            Err(ExamReaderError::TemplateError("Error".to_string()))
+    match filecontent {
+        Ok(content) => {
+            let rdr = csv::ReaderBuilder::new()
+                .has_headers(false)
+                .flexible(true)
+                .from_reader(content.as_bytes());
+
+            match get_questions_from_csv(rdr) {
+                Ok(qs) => Ok(qs),
+                Err(err) => Err(ExamReaderError::TemplateError(err)),
+            }
         }
-    } else {
-        Err(ExamReaderError::TemplateError("some thing".to_string()))
+        Err(err) => Err(ExamReaderError::IOError(err)),
     }
 }
 
 pub fn from_txt(filename: &str) -> Result<Vec<Question>, ExamReaderError> {
     let filecontent = fs::read_to_string(filename);
-    if let Ok(content) = filecontent {
-        let rdr = csv::ReaderBuilder::new()
-            .delimiter(b'\t')
-            .has_headers(false)
-            .from_reader(content.as_bytes());
-        if let Some(qs) = get_questions_from_csv(rdr) {
-            Ok(qs)
-        } else {
-            Err(ExamReaderError::TemplateError("Error".to_string()))
+    match filecontent {
+        Ok(content) => {
+            let rdr = csv::ReaderBuilder::new()
+                .delimiter(b'\t')
+                .flexible(true)
+                .has_headers(false)
+                .from_reader(content.as_bytes());
+            match get_questions_from_csv(rdr) {
+                Ok(qs) => Ok(qs),
+                Err(err) => Err(ExamReaderError::TemplateError(err)),
+            }
         }
-    } else {
-        Err(ExamReaderError::TemplateError("some thing".to_string()))
+        Err(err) => Err(ExamReaderError::IOError(err)),
     }
 }
 
-fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Option<Vec<Question>> {
+fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Result<Vec<Question>, String> {
     let mut order = 0;
-    let qs = rdr
+    let qs: Vec<Question> = rdr
         .records()
         .into_iter()
-        .map(|res| {
-            if let Ok(rec) = res {
+        .map(|res| match res {
+            Ok(rec) => {
                 let record: Vec<String> = rec.iter().map(|f| f.to_string()).collect();
                 let choices = get_question_options_from_csv(record[2..].to_vec());
                 if let Some(text) = record.get(1) {
@@ -155,38 +158,181 @@ fn get_questions_from_csv(mut rdr: csv::Reader<&[u8]>) -> Option<Vec<Question>> 
                     Question {
                         text: text.to_owned(),
                         order,
-                        choices,
+                        choices: Some(choices),
                         group,
                     }
                 } else {
                     Question::from("", 0)
                 }
-            } else {
-                Question::from("", 0)
             }
+            Err(_err) => Question::from("", 0),
         })
         .filter(|q| q.text != "")
         .collect();
-    Some(qs)
+
+    if qs.len() == 0 {
+        return Err("no questions were found".to_string());
+    }
+    Ok(qs)
 }
 
-fn get_question_options_from_csv(options: Vec<String>) -> Option<Choices> {
+fn get_question_options_from_csv(options: Vec<String>) -> Choices {
     let choices: Vec<Choice> = options.into_iter().map(|o| Choice { text: o }).collect();
-    Some(Choices(choices, CorrectChoice(0), None))
+    Choices(choices, CorrectChoice(0), None)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn read_from_txt_bad_file() {
+        //bad file
+        let filename = "files/testing/samples.txt";
+        let tex = match from_txt(filename) {
+            Ok(_) => "nothing".to_owned(),
+            Err(err) => err.to_string(),
+        };
+        assert_eq!(
+            tex,
+            "Reading error".to_string(),
+            "testing the file does not exist"
+        )
+    }
+    #[test]
+    fn read_from_txt_no_questions() {
+        //bad file
+        let filename = "files/testing/sample-no-questions.txt";
+        let tex = match from_txt(filename) {
+            Ok(_qs) => "".to_string(),
+            Err(err) => err.to_string(),
+        };
+        assert_eq!(
+            tex,
+            "Your input file is badly formatted: `no questions were found`".to_string(),
+            "testing no questions in csv"
+        )
+    }
+
+    #[test]
+    fn read_from_txt_first_is_different() {
+        //bad file
+        let filename = "files/testing/sample-first-options-different.txt";
+        let tex = match from_txt(filename) {
+            Ok(qs) => qs,
+            Err(_err) => [].to_vec(),
+        };
+        assert_eq!(
+            tex.len(),
+            20,
+            "testing first question with different options"
+        );
+        let qs1 = match tex.get(0) {
+            Some(q) => match &q.choices {
+                Some(op) => op.0.len(),
+                None => 0,
+            },
+            None => 0,
+        };
+        assert_eq!(qs1, 6, "testing first question with different options");
+
+        let qs2 = match tex.get(1) {
+            Some(q) => match &q.choices {
+                Some(op) => op.0.len(),
+                None => 0,
+            },
+            None => 0,
+        };
+        assert_eq!(qs2, 5, "testing first question with different options");
+
+        let qs3: i32 = match tex.get(2) {
+            Some(q) => match &q.choices {
+                Some(op) => op.0.len() as i32,
+                None => 0,
+            },
+            None => -1,
+        };
+        assert_eq!(qs3, 0, "testing first question with different options")
+    }
+
+    #[test]
+    fn read_from_csv_bad_file() {
+        //bad file
+        let filename = "files/testing/samples.csv";
+        let tex = match from_csv(filename) {
+            Ok(_) => "nothing".to_owned(),
+            Err(err) => err.to_string(),
+        };
+        assert_eq!(
+            tex,
+            "Reading error".to_string(),
+            "testing the file does not exist"
+        )
+    }
+    #[test]
+    fn read_from_csv_no_questions() {
+        //bad file
+        let filename = "files/testing/sample-no-questions.csv";
+        let tex = match from_csv(filename) {
+            Ok(_qs) => "".to_string(),
+            Err(err) => err.to_string(),
+        };
+        assert_eq!(
+            tex,
+            "Your input file is badly formatted: `no questions were found`".to_string(),
+            "testing no questions in csv"
+        )
+    }
+
+    #[test]
+    fn read_from_csv_first_is_different() {
+        //bad file
+        let filename = "files/testing/sample-first-options-different.csv";
+        let tex = match from_csv(filename) {
+            Ok(qs) => qs,
+            Err(_err) => [].to_vec(),
+        };
+        assert_eq!(
+            tex.len(),
+            6,
+            "testing first question with different options"
+        );
+        let qs1 = match tex.get(0) {
+            Some(q) => match &q.choices {
+                Some(op) => op.0.len(),
+                None => 0,
+            },
+            None => 0,
+        };
+        assert_eq!(qs1, 7, "testing first question with different options");
+
+        let qs2 = match tex.get(1) {
+            Some(q) => match &q.choices {
+                Some(op) => op.0.len(),
+                None => 0,
+            },
+            None => 0,
+        };
+        assert_eq!(qs2, 6, "testing first question with different options");
+
+        let qs3: i32 = match tex.get(2) {
+            Some(q) => match &q.choices {
+                Some(op) => op.0.len() as i32,
+                None => 0,
+            },
+            None => -1,
+        };
+        assert_eq!(qs3, 0, "testing first question with different options")
+    }
+
     #[test]
     fn read_from_tex_bad_file() {
         //bad file
-        let filename = "../files/testing/templatte.tex";
+        let filename = "files/testing/templatte.tex";
         let tex = match from_tex(filename) {
             Ok(_) => "nothing".to_owned(),
             Err(err) => err.to_string(),
         };
-        println!("{:#?}", tex);
         assert_eq!(
             tex,
             "Reading error".to_string(),
@@ -201,7 +347,6 @@ mod tests {
             Ok(_) => "nothing".to_owned(),
             Err(err) => err.to_string(),
         };
-        println!("{:#?}", tex);
         assert_eq!(
             tex,
             "Your input file is badly formatted: `The document must have \\begin{document} tag`"
@@ -216,7 +361,6 @@ mod tests {
             Ok(_) => "nothing".to_owned(),
             Err(err) => err.to_string(),
         };
-        println!("{:#?}", tex);
         assert_eq!(
             tex,
             "Your input file is badly formatted: `The document must have \\end{document} tag`"
@@ -232,7 +376,6 @@ mod tests {
             Ok(_) => "nothing".to_owned(),
             Err(err) => err.to_string(),
         };
-        println!("{:#?}", tex);
         assert_eq!(
             tex,
             "Your input file is badly formatted: `No questions were found.`".to_string(),
