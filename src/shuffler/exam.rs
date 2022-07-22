@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{errors::ExamReaderError, examreader, shuffler::Question};
 
+use super::ExamSetting;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Exam {
     pub name: String,
@@ -19,14 +21,20 @@ impl Exam {
             ordering: None,
         }
     }
-    pub fn from_tex(filename: &str, name: &str) -> Result<Exam, ExamReaderError> {
-        let (preamble, questions, _) = examreader::from_tex(filename)?;
-        Ok(Exam {
-            name: name.to_string(),
-            questions: Some(questions),
-            preamble,
-            ordering: None,
-        })
+    pub fn from_tex(
+        filename: &str,
+        name: &str,
+    ) -> Result<(Exam, Option<ExamSetting>), ExamReaderError> {
+        let (preamble, questions, es) = examreader::from_tex(filename)?;
+        Ok((
+            Exam {
+                name: name.to_string(),
+                questions: Some(questions),
+                preamble,
+                ordering: None,
+            },
+            es,
+        ))
     }
     pub fn from_csv(filename: &str, name: &str) -> Result<Exam, ExamReaderError> {
         let questions = examreader::from_csv(filename)?;
