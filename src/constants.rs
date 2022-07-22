@@ -6,3 +6,5 @@ pub const TEX_QUESTION_START: &str = "%{#q}";
 pub const TEX_QUESTION_END: &str = "%{/q}";
 pub const TEX_OPTION_START: &str = "%{#o}";
 pub const TEX_OPTION_END: &str = "%{/o}";
+pub const TEX_SETTING_START: &str = "%{#setting}";
+pub const TEX_SETTING_END: &str = "%{/setting}";

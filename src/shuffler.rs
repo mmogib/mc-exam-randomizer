@@ -1,10 +1,12 @@
 pub mod exam;
 pub mod question;
+pub mod setting;
 
 pub use exam::*;
 pub use question::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+pub use setting::*;
 
 pub fn shuffle_questions(qs: &Vec<Question>) -> Vec<&Question> {
     let noq = qs.len() as u32;

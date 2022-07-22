@@ -4,20 +4,65 @@ use std::fs;
 use crate::{
     constants::*,
     errors::ExamReaderError,
-    shuffler::{Choice, Choices, CorrectChoice, Question},
+    shuffler::{Choice, Choices, CorrectChoice, ExamSetting, Question},
 };
 
-pub fn from_tex(filename: &str) -> Result<(Option<String>, Vec<Question>), ExamReaderError> {
+pub fn from_tex(
+    filename: &str,
+) -> Result<(Option<String>, Vec<Question>, Option<ExamSetting>), ExamReaderError> {
     let filecontent = fs::read_to_string(filename);
     match filecontent {
         Ok(contnet) => match get_questions_from_tex(&contnet) {
-            Ok(cntnt) => Ok((get_preamble_from_text(&contnet), cntnt)),
+            Ok(cntnt) => Ok((
+                get_preamble_from_text(&contnet),
+                cntnt,
+                get_setting_from_text(&contnet),
+            )),
             Err(err) => Err(ExamReaderError::TemplateError(err)),
         },
         Err(err) => Err(ExamReaderError::IOError(err)),
     }
 }
+fn get_setting_from_text(content: &String) -> Option<ExamSetting> {
+    if let Some(s) = content.find(TEX_SETTING_START) {
+        if let Some(e) = content.find(TEX_SETTING_END) {
+            let sttng = content[(s + 11)..e].trim().to_string();
+            let sertting_parts: Vec<(String, String)> = sttng
+                .split("\n")
+                .map(|s| s.trim().trim_start_matches("%").trim())
+                .map(|s| {
+                    let key_val: Vec<String> = s
+                        .split("=")
+                        .map(|ss| ss.trim())
+                        .map(|v| v.to_string())
+                        .map(|v| v.trim().to_string())
+                        .collect();
+                    let key = if let Some(ks) = key_val.get(0) {
+                        let val = if let Some(vs) = key_val.get(1) {
+                            (ks.to_owned(), vs.to_owned())
+                        } else {
+                            (ks.to_owned(), "".to_string())
+                        };
+                        val
+                    } else {
+                        ("".to_string(), "".to_string())
+                    };
 
+                    return (key.0, key.1);
+                })
+                .collect();
+            let exm_setting = sertting_parts.iter().fold(ExamSetting::new(), |a, v| {
+                ExamSetting::append_from_key_value(a, &v.0, (v.1).to_owned())
+            });
+
+            return Some(exm_setting);
+        } else {
+            return None;
+        }
+    }
+
+    None
+}
 fn get_preamble_from_text(content: &String) -> Option<String> {
     if let Some(s) = content.find(TEX_PREAMBLE_START) {
         if let Some(e) = content.find(TEX_PREAMBLE_END) {
@@ -385,7 +430,7 @@ mod tests {
     fn read_from_tex() -> Result<(String, usize, Vec<Question>), String> {
         let filename = "files/testing/template.tex";
         match from_tex(filename) {
-            Ok((preamble, qs)) => match preamble {
+            Ok((preamble, qs, _)) => match preamble {
                 Some(pre) => Ok((pre, qs.len(), qs)),
                 None => Err("".to_string()),
             },
@@ -449,5 +494,76 @@ mod tests {
             }
             Err(_err) => (),
         }
+    }
+
+    #[test]
+    fn read_from_tex_setting_full() {
+        let filename = "files/testing/exam_setting.tex";
+        let exammatch = match from_tex(filename) {
+            Ok((_, _, es)) => match es {
+                Some(exam_setting) => exam_setting,
+                None => ExamSetting::new(),
+            },
+            Err(_err) => ExamSetting::new(),
+        };
+        assert_eq!(
+            exammatch,
+            ExamSetting {
+                university: "KFUPM".to_string(),
+                department: "MATH".to_string(),
+                term: "Term 213".to_string(),
+                coursecode: "MATH102".to_string(),
+                examname: "Major Exam 1".to_string(),
+                examdate: "2022-07-22T03:38:27.729Z".to_string(),
+                timeallowed: "Two hours".to_string(),
+                numberofvestions: 4,
+                groups: "".to_string(),
+            },
+            "testing exam setting"
+        );
+    }
+
+    #[test]
+    fn read_from_tex_setting_partial() {
+        let filename = "files/testing/exam_setting_withmissing_ones.tex";
+        let exammatch = match from_tex(filename) {
+            Ok((_, _, es)) => match es {
+                Some(exam_setting) => exam_setting,
+                None => ExamSetting::new(),
+            },
+            Err(_err) => ExamSetting::new(),
+        };
+        assert_eq!(
+            exammatch,
+            ExamSetting {
+                university: "KFUPM".to_string(),
+                department: "MATH".to_string(),
+                term: "Term 213".to_string(),
+                coursecode: "".to_string(),
+                examname: "".to_string(),
+                examdate: "".to_string(),
+                timeallowed: "Two hours".to_string(),
+                numberofvestions: 4,
+                groups: "".to_string(),
+            },
+            "testing exam partial setting"
+        );
+    }
+
+    #[test]
+    fn read_from_tex_setting_empty() {
+        let filename = "files/testing/template.tex";
+        let exammatch = match from_tex(filename) {
+            Ok((_, _, es)) => match es {
+                Some(exam_setting) => exam_setting,
+                None => ExamSetting::new(),
+            },
+            Err(_err) => ExamSetting::new(),
+        };
+        assert_eq!(
+            exammatch,
+            ExamSetting::new(),
+            "testing exam setting is empty"
+        );
     }
 }

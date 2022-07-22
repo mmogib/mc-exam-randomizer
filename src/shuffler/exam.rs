@@ -20,7 +20,7 @@ impl Exam {
         }
     }
     pub fn from_tex(filename: &str, name: &str) -> Result<Exam, ExamReaderError> {
-        let (preamble, questions) = examreader::from_tex(filename)?;
+        let (preamble, questions, _) = examreader::from_tex(filename)?;
         Ok(Exam {
             name: name.to_string(),
             questions: Some(questions),
